@@ -38,5 +38,5 @@ them.
 
 - [x] Put your name at the top of the README
 - [x] Fix the auto-grading badge at the top of the README
-- [ ] Replace "project-03-template" in [package.json](package.json) and
+- [x] Replace "project-03-template" in [package.json](package.json) and
       [app.json](app.json) with the name of this repo.
