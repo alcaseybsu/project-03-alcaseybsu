@@ -1,7 +1,7 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/E1rFec9K)
-# CS 411 Project 3: **YOUR NAME HERE**
+# CS 411 Project 3: **Leah Casey**
 
-![auto-grading badge](https://github.com/bsu-cs-jb/YOUR-REPO-NAME-HERE/actions/workflows/classroom.yml/badge.svg)
+![auto-grading badge](https://github.com/bsu-cs-jb/alcaseybsu/actions/workflows/classroom.yml/badge.svg)
 
 - [ ] Replace the `YOUR-REPO-NAME-HERE` text above with the name of your
       repository and when you push this to GitHub a badge should appear showing
@@ -41,7 +41,7 @@ them.
 > Complete these tasks as part of the project:
 <!-- prettier-ignore-end -->
 
-- [ ] Put your name at the top of the README
-- [ ] Fix the auto-grading badge at the top of the README
+- [x] Put your name at the top of the README
+- [x] Fix the auto-grading badge at the top of the README
 - [ ] Replace "project-03-template" in [package.json](package.json) and
       [app.json](app.json) with the name of this repo.
