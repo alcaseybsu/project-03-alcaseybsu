@@ -3,11 +3,6 @@
 
 ![auto-grading badge](https://github.com/bsu-cs-jb/project-03-alcaseybsu/actions/workflows/classroom.yml/badge.svg)
 
-- [ ] Replace the `YOUR-REPO-NAME-HERE` text above with the name of your
-      repository and when you push this to GitHub a badge should appear showing
-      "failing" or "passing" depending on the outcome of your last build. You
-      may delete this instruction once it is working.
-
 ## Goal
 
 Implement Project 3.
