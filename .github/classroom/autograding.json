@@ -1,0 +1,34 @@
+{
+  "tests": [
+    {
+      "name": "npm run lint",
+      "setup": "npm install",
+      "run": "npm run lint",
+      "input": "",
+      "output": "",
+      "comparison": "exact",
+      "timeout": 10,
+      "points": 1
+    },
+    {
+      "name": "npm run typecheck",
+      "setup": "npm install",
+      "run": "npm run typecheck",
+      "input": "",
+      "output": "",
+      "comparison": "exact",
+      "timeout": 10,
+      "points": 1
+    },
+    {
+      "name": "npm test",
+      "setup": "npm install",
+      "run": "npm test",
+      "input": "",
+      "output": "",
+      "comparison": "exact",
+      "timeout": 10,
+      "points": 1
+    }
+  ]
+}
