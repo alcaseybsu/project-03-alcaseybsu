@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import _ from "lodash";
 import { StatusBar } from "expo-status-bar";
-import { Text, TextInput, SafeAreaView, View, ScrollView, Button, Modal } from "react-native";
+import { Text, TextInput, SafeAreaView, View, ScrollView, Button, GestureResponderEvent } from "react-native";
 import { commonStyles } from "./provided/styles";
 import { useAppContext } from "./provided/AppContext";
 import { Session, User, VOTES, nextAttending } from "./provided/types";
@@ -58,24 +58,6 @@ function SessionDetails({ session }: { session?: Session }) {
 }
 
 function InvitationsSummary({ session }: { session?: Session }) {
-  const { inviteUser } = useAppContext();
-  const [inviteeName, setInviteeName] = useState('');
-  const [isModalVisible, setModalVisible] = useState(false);
-
-  const showModal = () => {
-    setModalVisible(true);
-  };
-
-  const hideModal = () => {
-    setModalVisible(false);
-  };
-
-  const handleInvite = () => {
-    if (session && inviteUser && inviteeName.trim() !== '') {
-      inviteUser(session.id, inviteeName.trim());
-      hideModal();
-    }
-  };
   return (
     <>
       <Text style={commonStyles.subTitle}>Invitations Summary</Text>
@@ -87,56 +69,39 @@ function InvitationsSummary({ session }: { session?: Session }) {
               - Invitations sent: {session.invitations.length}
             </Text>
             <Text style={commonStyles.listText}>
-              - Invitations accepted:{' '}
+              - Invitations accepted:{" "}
               {session.invitations.filter((i) => i.accepted).length}
             </Text>
             <Text style={commonStyles.listText}>
-              - Attending:{' '}
+              - Attending:{" "}
               {
                 session.invitations.filter(
-                  (i) => i.accepted && i.attending === 'yes',
+                  (i) => i.accepted && i.attending === "yes",
                 ).length
               }
             </Text>
             <Text style={commonStyles.listText}>
-              - Undecided:{' '}
+              - Undecided:{" "}
               {
                 session.invitations.filter(
-                  (i) => i.accepted && i.attending === 'undecided',
+                  (i) => i.accepted && i.attending === "undecided",
                 ).length
               }
             </Text>
             <Text style={commonStyles.listText}>
-              - Not attending:{' '}
+              - Not attending:{" "}
               {
                 session.invitations.filter(
-                  (i) => i.accepted && i.attending === 'no',
+                  (i) => i.accepted && i.attending === "no",
                 ).length
               }
             </Text>
-            <Button title="Invite" onPress={showModal} />
           </>
         ) : (
           <Text style={commonStyles.listText}>loading...</Text>
         )}
       </View>
       <View style={commonStyles.horzBar3} />
-
-      {/* Modal for Invite */}
-      <Modal visible={isModalVisible} animationType="slide" transparent={true}>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 10 }}>
-            <Text>Enter the name of the friend to invite:</Text>
-            <TextInput
-              placeholder="Friend's name"
-              value={inviteeName}
-              onChangeText={(text) => setInviteeName(text)}
-            />
-            <Button title="Invite" onPress={handleInvite} />
-            <Button title="Cancel" onPress={hideModal} />
-          </View>
-        </View>
-      </Modal>
     </>
   );
 }
@@ -177,12 +142,13 @@ export default function Project3App() {
     user,
     currentSession,
     addSuggestion,
-    inviteUser,
+    inviteUser: contextInviteUser,
     updateResponse,
     updateVote,
   } = useAppContext();
 
   const [newSuggestion, setNewSuggestion] = useState("");
+  const [inviteeName] = useState('');
 
   const handleAddSuggestion = async () => {
     try {
@@ -201,17 +167,11 @@ export default function Project3App() {
   };
 
 
-  const handleInviteUser = () => {
-    if (currentSession && inviteUser) {
-      const invitee = window.prompt("Enter the name of the friend to invite:");
-
-      if (invitee) {
-        // call inviteUser with session ID and invitee name
-        inviteUser(currentSession.id, invitee);
-      } else {
-        // handle case when user cancels or enters empty name
-        console.log("Invitation canceled or invalid name entered.");
-      }
+  const handleInviteUser = (_event: GestureResponderEvent) => {
+    if (currentSession && contextInviteUser) {
+      contextInviteUser(currentSession.id, inviteeName);
+    } else {
+      console.error("Invalid invitation input");
     }
   };
 
@@ -242,28 +202,21 @@ export default function Project3App() {
   const handleUpdateResponse = () => {
     if (currentSession && updateResponse) {
       const newAttendingStatus = nextAttending(currentSession.attending);
-
       updateResponse(currentSession.id, !currentSession.accepted, newAttendingStatus);
     }
   };
-
-
-
-
-
 
 
   const handleAcceptInvitation = async () => {
     try {
       if (currentSession && updateResponse) {
         const attendingStatus: Attending = 'yes';
-
         updateResponse(currentSession.id, true, attendingStatus);
-      } else {        
+      } else {
         console.error("Current session or updateResponse is not available.");
       }
     } catch (error) {
-      console.error("Error accepting invitation:", error);      
+      console.error("Error accepting invitation:", error);
     }
   };
 
