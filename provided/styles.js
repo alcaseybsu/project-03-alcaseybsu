@@ -86,6 +86,12 @@ export const commonStyles = StyleSheet.create({
     backgroundColor: theme.dark1,
     alignItems: "center",
   },
+  suggestionsPageButton: {
+    backgroundColor: theme.highlight1,
+    borderRadius: 10,
+    padding: 10,
+    margin: 10,
+  },
 });
 
 export default {

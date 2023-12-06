@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import _ from "lodash";
 import { StatusBar } from "expo-status-bar";
-import { Text, TextInput, SafeAreaView, View, ScrollView, Button, GestureResponderEvent } from "react-native";
+import { Text, TextInput, SafeAreaView, View, ScrollView, Button, GestureResponderEvent, TouchableOpacity } from "react-native";
 import { commonStyles } from "./provided/styles";
 import { useAppContext } from "./provided/AppContext";
 import { Session, User, VOTES, nextAttending } from "./provided/types";
 import { choose } from "./provided/utils";
 import { Attending } from './provided/types';
+import { useNavigation } from '@react-navigation/native';
+//import SuggestionsPage from './SuggestionsPage';
 
 function UserDetails({ user }: { user?: User }) {
   return (
@@ -147,6 +149,8 @@ export default function Project3App() {
     updateVote,
   } = useAppContext();
 
+  const navigation = useNavigation();
+
   const [newSuggestion, setNewSuggestion] = useState("");
   const [inviteeName] = useState('');
 
@@ -201,8 +205,21 @@ export default function Project3App() {
 
   const handleUpdateResponse = () => {
     if (currentSession && updateResponse) {
-      const newAttendingStatus = nextAttending(currentSession.attending);
-      updateResponse(currentSession.id, !currentSession.accepted, newAttendingStatus);
+      let newAttendingStatus: Attending;
+
+      // Toggle between "Yes," "No," and "Undecided"
+      switch (currentSession.attending) {
+        case 'yes':
+          newAttendingStatus = 'no';
+          break;
+        case 'no':
+          newAttendingStatus = 'undecided';
+          break;
+        default:
+          newAttendingStatus = 'yes';
+      }
+
+      updateResponse(currentSession.id, true, newAttendingStatus);
     }
   };
 
@@ -220,23 +237,27 @@ export default function Project3App() {
     }
   };
 
+  const [currentScreen, setCurrentScreen] = useState<'initial' | 'suggestions'>('initial');
+
+  const navigateToSuggestions = () => {
+    navigation.navigate('Suggestions');
+    setCurrentScreen('suggestions');
+  };
+
   return (
     <SafeAreaView style={commonStyles.app}>
       <View style={commonStyles.appContainer}>
         <Text style={commonStyles.title}>Project 3</Text>
         <View style={commonStyles.horzBar} />
-        <Text style={commonStyles.bodyText}>
-          Make Up Our Hive Mind
-        </Text>
+        <Text style={commonStyles.bodyText}>Make Up Our Mind</Text>
         <View style={commonStyles.horzBar} />
         <View style={commonStyles.buttonContainer}>
           {!currentSession?.accepted && (
-            <Button title="Accept" onPress={handleAcceptInvitation} />
+            <Button title="Accept" onPress={handleAcceptInvitation} disabled={currentSession?.accepted} />
           )}
-          <Button title="Respond" onPress={handleUpdateResponse} />
-          <Button title="Suggest" onPress={handleAddSuggestion} />
-          <Button title="Invite" onPress={handleInviteUser} />
-          <Button title="Vote" onPress={handleUpdateVote} />
+          <Button title="Respond" onPress={handleUpdateResponse} disabled={!currentSession?.accepted} />
+          <Button title="Invite" onPress={handleInviteUser} disabled={!currentSession?.accepted} />
+          <Button title="Vote" onPress={handleUpdateVote} disabled={!currentSession?.accepted} />
         </View>
         {/* User input components */}
         <View>
@@ -245,19 +266,25 @@ export default function Project3App() {
             value={newSuggestion}
             onChangeText={(text) => setNewSuggestion(text)}
           />
-          <Button title="Add Suggestion" onPress={handleAddSuggestion} />
+          <Button title="Add Suggestion" onPress={handleAddSuggestion} disabled={!currentSession?.accepted} />
         </View>
-        <ScrollView
-          style={commonStyles.scroll}
-          contentContainerStyle={commonStyles.scrollContent}
-        >
-          {currentSession?.accepted && <UserDetails user={user} />}
-          <SessionDetails session={currentSession} />
-          <SuggestionsSummary session={currentSession} />
-          <InvitationsSummary session={currentSession} />
+        <ScrollView style={commonStyles.scroll} contentContainerStyle={commonStyles.scrollContent}>
+          {currentScreen === 'initial' && (
+            <>
+              {currentSession?.accepted && <UserDetails user={user} />}
+              <SessionDetails session={currentSession} />
+              <View style={commonStyles.horzBar3} />
+              <TouchableOpacity onPress={navigateToSuggestions} style={commonStyles.suggestionsButton}>
+                <Text style={commonStyles.listText}>Suggestions Summary</Text>
+                {/* Add a white plus sign (or any other icon) here */}
+              </TouchableOpacity>
+              <SuggestionsSummary session={currentSession} />
+              <InvitationsSummary session={currentSession} />
+            </>
+          )}
           <StatusBar style="auto" />
         </ScrollView>
       </View>
     </SafeAreaView>
   );
-}
+}  
