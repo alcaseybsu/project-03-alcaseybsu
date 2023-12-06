@@ -156,21 +156,21 @@ export default function DemoSummary() {
   } = useAppContext();
 
   const handleAddSuggestion = () => {
-    // TODO: Implement this properly
+    // implement this properly
     if (currentSession && addSuggestion) {
       addSuggestion(currentSession.id, "A new suggestion");
     }
   };
 
   const handleInviteUser = () => {
-    // TODO: Implement this properly
+    // implement this properly
     if (currentSession && inviteUser) {
       inviteUser(currentSession.id, "Molly");
     }
   };
 
   const handleUpdateVote = () => {
-    // TODO: Implement this properly
+    // implement this properly
     if (currentSession && updateVote) {
       const suggestion = choose(currentSession.suggestions);
       if (suggestion) {
@@ -180,7 +180,7 @@ export default function DemoSummary() {
   };
 
   const handleUpdateResponse = () => {
-    // TODO: Implement this properly
+    // implement this properly
     if (currentSession && updateResponse) {
       updateResponse(
         currentSession.id,
