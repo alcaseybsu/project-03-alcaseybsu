@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useFakeBackend } from './backend/FakeBackend';
 import _ from "lodash";
 import { StatusBar } from "expo-status-bar";
-import { Text, TextInput, SafeAreaView, View, ScrollView, Button, GestureResponderEvent } from "react-native";
-import { commonStyles } from "./provided/styles";
+import { Text, TextInput, SafeAreaView, View, ScrollView, Button, GestureResponderEvent, TouchableOpacity } from "react-native";
+import { commonStyles, theme } from "./provided/styles";
 import { useAppContext } from "./provided/AppContext";
 import { Session, User, VOTES, nextAttending } from "./provided/types";
 import { choose } from "./provided/utils";
@@ -139,15 +139,13 @@ function SuggestionsSummary({ session }: { session?: Session }) {
 
 
 export default function Project3App() {
-
   const backend = useFakeBackend();
 
   useEffect(() => {
-    backend.fetchSelf().then(user => {
+    backend.fetchSelf().then((user) => {
       console.log(user);
     });
   }, []);
-
 
   const {
     user,
@@ -158,9 +156,46 @@ export default function Project3App() {
     updateVote,
   } = useAppContext();
 
+  const [newSuggestion, setNewSuggestion] = useState('');
+  const [inviteeName, setInviteeName] = useState('');
 
-  const [newSuggestion, setNewSuggestion] = useState("");
-  const [inviteeName] = useState('');
+  // Add the following state for navigation
+  const [currentScreen, setCurrentScreen] = useState<'initial' | 'suggestions'>('initial');
+
+  const navigateToSuggestions = () => {
+    setCurrentScreen('suggestions');
+  };
+
+  const navigateToInitial = () => {
+    setCurrentScreen('initial');
+  };
+
+  const renderMainContent = () => {
+    if (currentScreen === 'suggestions') {
+      // Render the Suggestions screen content here
+      return (
+        <>
+          <TouchableOpacity onPress={navigateToInitial} style={commonStyles.goBackButton}>
+            <Text style={commonStyles.listText}>Go Back to Initial Screen</Text>
+          </TouchableOpacity>
+          {/* ... (Suggestions screen content) */}
+          <SuggestionsSummary session={currentSession} />
+        </>
+      );
+    } else {
+      // Render the Initial screen content here
+      return (
+        <>
+          {currentSession?.accepted && <UserDetails user={user} />}
+          <SessionDetails session={currentSession} />
+          <View style={commonStyles.horzBar3} />
+          <Text style={commonStyles.listText}></Text>
+          <SuggestionsSummary session={currentSession} />
+          <InvitationsSummary session={currentSession} />
+        </>
+      );
+    }
+  };
 
   const handleAddSuggestion = async () => {
     try {
@@ -245,12 +280,14 @@ export default function Project3App() {
     }
   };
 
+
+
   return (
     <SafeAreaView style={commonStyles.app}>
       <View style={commonStyles.appContainer}>
-        <Text style={commonStyles.title}>Project 3</Text>
+      <Text style={{ ...commonStyles.title, color: theme.titleText }}>In Decision</Text>
         <View style={commonStyles.horzBar} />
-        <Text style={commonStyles.bodyText}>Make Up Our Mind</Text>
+        <Text style={{ ...commonStyles.bodyText, color: theme.bodyText }}>Make Up Our Mind</Text>
         <View style={commonStyles.horzBar} />
         <View style={commonStyles.buttonContainer}>
           {!currentSession?.accepted && (
@@ -265,22 +302,15 @@ export default function Project3App() {
           <TextInput
             placeholder="Enter suggestion"
             value={newSuggestion}
-            onChangeText={(text) => setNewSuggestion(text)} />
+            onChangeText={(text) => setNewSuggestion(text)}
+          />
           <Button title="Add Suggestion" onPress={handleAddSuggestion} disabled={!currentSession?.accepted} />
         </View>
         <ScrollView style={commonStyles.scroll} contentContainerStyle={commonStyles.scrollContent}>
-          {(
-            <>
-              {currentSession?.accepted && <UserDetails user={user} />}
-              <SessionDetails session={currentSession} />
-              <View style={commonStyles.horzBar3} />
-              <SuggestionsSummary session={currentSession} />
-              <InvitationsSummary session={currentSession} />
-            </>
-          )}
+          {renderMainContent()}
           <StatusBar style="auto" />
         </ScrollView>
       </View>
     </SafeAreaView>
   );
-}  
+}

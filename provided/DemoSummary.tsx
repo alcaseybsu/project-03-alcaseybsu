@@ -7,11 +7,28 @@ import {
   View,
   ScrollView,
   Button,
+  SafeAreaView,
+  ScrollView,
+  Text,
+  View,
 } from "react-native";
 import { useAppContext } from "./AppContext";
 import { Session, User, VOTES, nextAttending } from "./types";
 import _ from "lodash";
 import { choose } from "./utils";
+import { StatusBar } from "expo-status-bar";
+import { StatusBar } from "expo-status-bar";
+import React from "react";
+import React from "react";
+import { Text, SafeAreaView, View, ScrollView } from "react-native";
+import { Text, SafeAreaView, View, ScrollView } from "react-native";
+import { currentScreen, UserDetails, SessionDetails, SuggestionsSummary, InvitationsSummary } from '../Project3App';
+import SuggestionsScreen from "./SuggestionsScreen";
+import SuggestionsScreen from "./SuggestionsScreen";
+import { commonStyles } from "./provided/styles";
+import { commonStyles } from "./provided/styles";
+import ExpoStatusBar from "expo-status-bar/build/ExpoStatusBar";
+import { commonStyles } from "./styles";
 
 /**
  * This is a demo of how to use the AppContext properly.
@@ -306,3 +323,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 });
+return (
+  <SafeAreaView style={commonStyles.app}>
+    <View style={commonStyles.appContainer}>
+      <ScrollView style={commonStyles.scroll} contentContainerStyle={commonStyles.scrollContent}>
+        {currentScreen === 'initial' && (
+          <>
+            {currentSession?.accepted && <UserDetails user={user} />}
+            <SessionDetails session={currentSession} />
+            <View style={commonStyles.horzBar3} />
+            <Text style={commonStyles.listText}>Suggestions Summary</Text>
+            <SuggestionsSummary session={currentSession} />
+            <InvitationsSummary session={currentSession} />
+          </>
+        )}
+
+        {currentScreen === 'suggestions' && (
+          <SuggestionsScreen suggestions={currentSession?.suggestions || []} />
+        )}
+        <StatusBar style="auto" />
+      </ScrollView>
+    </View>
+  </SafeAreaView>
+);
