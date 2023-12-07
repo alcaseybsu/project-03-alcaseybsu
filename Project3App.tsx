@@ -1,14 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useFakeBackend } from './backend/FakeBackend';
 import _ from "lodash";
 import { StatusBar } from "expo-status-bar";
-import { Text, TextInput, SafeAreaView, View, ScrollView, Button, GestureResponderEvent, TouchableOpacity } from "react-native";
+import { Text, TextInput, SafeAreaView, View, ScrollView, Button, GestureResponderEvent } from "react-native";
 import { commonStyles } from "./provided/styles";
 import { useAppContext } from "./provided/AppContext";
 import { Session, User, VOTES, nextAttending } from "./provided/types";
 import { choose } from "./provided/utils";
 import { Attending } from './provided/types';
-import { useNavigation } from '@react-navigation/native';
-//import SuggestionsPage from './SuggestionsPage';
 
 function UserDetails({ user }: { user?: User }) {
   return (
@@ -140,6 +139,16 @@ function SuggestionsSummary({ session }: { session?: Session }) {
 
 
 export default function Project3App() {
+
+  const backend = useFakeBackend();
+
+  useEffect(() => {
+    backend.fetchSelf().then(user => {
+      console.log(user);
+    });
+  }, []);
+
+
   const {
     user,
     currentSession,
@@ -149,7 +158,6 @@ export default function Project3App() {
     updateVote,
   } = useAppContext();
 
-  const navigation = useNavigation();
 
   const [newSuggestion, setNewSuggestion] = useState("");
   const [inviteeName] = useState('');
@@ -237,13 +245,6 @@ export default function Project3App() {
     }
   };
 
-  const [currentScreen, setCurrentScreen] = useState<'initial' | 'suggestions'>('initial');
-
-  const navigateToSuggestions = () => {
-    navigation.navigate('Suggestions');
-    setCurrentScreen('suggestions');
-  };
-
   return (
     <SafeAreaView style={commonStyles.app}>
       <View style={commonStyles.appContainer}>
@@ -264,20 +265,15 @@ export default function Project3App() {
           <TextInput
             placeholder="Enter suggestion"
             value={newSuggestion}
-            onChangeText={(text) => setNewSuggestion(text)}
-          />
+            onChangeText={(text) => setNewSuggestion(text)} />
           <Button title="Add Suggestion" onPress={handleAddSuggestion} disabled={!currentSession?.accepted} />
         </View>
         <ScrollView style={commonStyles.scroll} contentContainerStyle={commonStyles.scrollContent}>
-          {currentScreen === 'initial' && (
+          {(
             <>
               {currentSession?.accepted && <UserDetails user={user} />}
               <SessionDetails session={currentSession} />
               <View style={commonStyles.horzBar3} />
-              <TouchableOpacity onPress={navigateToSuggestions} style={commonStyles.suggestionsButton}>
-                <Text style={commonStyles.listText}>Suggestions Summary</Text>
-                {/* Add a white plus sign (or any other icon) here */}
-              </TouchableOpacity>
               <SuggestionsSummary session={currentSession} />
               <InvitationsSummary session={currentSession} />
             </>

@@ -14,7 +14,7 @@ import Project3App from "./Project3App";
 
 export default function App() {
   return (
-    <AppContextProvider pauseUpdates={true} refreshInterval={5000}>
+    <AppContextProvider pauseUpdates={false} refreshInterval={5000}>
       <Project3App />
     </AppContextProvider>
   );

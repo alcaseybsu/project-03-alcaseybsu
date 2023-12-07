@@ -13,6 +13,13 @@ export const theme = {
 };
 
 export const commonStyles = StyleSheet.create({
+  app: {
+    flex: 1,
+    paddingTop: 35,
+    paddingBottom: 20,
+    backgroundColor: theme.dark1,
+    alignItems: "center",
+  },
   buttonContainer: {
     flexDirection: "row",
   },
@@ -47,24 +54,27 @@ export const commonStyles = StyleSheet.create({
     width: "90%",
     backgroundColor: theme.highlight1,
   },
-  listText: {
-    fontSize: 16,
-    color: theme.bodyText,
-    alignSelf: "flex-start",
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 16,
+    color: theme.titleText, // Text color
   },
   bodyText: {
     fontSize: 16,
-    color: theme.bodyText,
+    textAlign: 'center',
+    color: theme.bodyText, // Text color
   },
   subTitle: {
-    fontSize: 26,
-    alignSelf: "flex-start",
-    color: theme.subTitleText,
-    paddingTop: 10,
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: theme.subTitleText, // Text color
   },
-  title: {
-    fontSize: 40,
-    color: theme.titleText,
+  listText: {
+    fontSize: 14,
+    color: theme.bodyText, // Text color
   },
   appContainer: {
     flex: 1,
@@ -78,14 +88,7 @@ export const commonStyles = StyleSheet.create({
   },
   scrollContent: {
     alignItems: "center",
-  },
-  app: {
-    flex: 1,
-    paddingTop: 35,
-    paddingBottom: 20,
-    backgroundColor: theme.dark1,
-    alignItems: "center",
-  },
+  },  
   suggestionsPageButton: {
     backgroundColor: theme.highlight1,
     borderRadius: 10,
