@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useFakeBackend } from './backend/FakeBackend';
 import _ from "lodash";
 import { StatusBar } from "expo-status-bar";
-import { Text, TextInput, SafeAreaView, View, ScrollView, Button, GestureResponderEvent, TouchableOpacity } from "react-native";
+import { Text, TextInput, SafeAreaView, View, ScrollView, Button, GestureResponderEvent, TouchableOpacity, Modal, TouchableHighlight } from "react-native";
 import { commonStyles, theme } from "./provided/styles";
 import { useAppContext } from "./provided/AppContext";
-import { Session, User, VOTES, nextAttending } from "./provided/types";
+import { Session, User, VOTES, nextAttending, Attending } from "./provided/types";
 import { choose } from "./provided/utils";
-import { Attending } from './provided/types';
+
 
 function UserDetails({ user }: { user?: User }) {
   return (
@@ -17,8 +17,8 @@ function UserDetails({ user }: { user?: User }) {
       <View style={commonStyles.detailsView}>
         {user ? (
           <>
-            <Text style={commonStyles.listText}>- Your User ID: {user.id}</Text>
-            <Text style={commonStyles.listText}>- Your User Name: {user.name}</Text>
+            <Text style={commonStyles.listText}>Your User ID: {user.id}</Text>
+            <Text style={commonStyles.listText}>Your User Name: {user.name}</Text>
           </>
         ) : (
           <Text style={commonStyles.listText}>loading...</Text>
@@ -37,16 +37,17 @@ function SessionDetails({ session }: { session?: Session }) {
       <View style={commonStyles.detailsView}>
         {session ? (
           <>
-            <Text style={commonStyles.listText}>- Session ID: {session.id}</Text>
-            <Text style={commonStyles.listText}>- Owner: {session.owner.name}</Text>
+            <Text style={commonStyles.listText}>Session ID: {session.id}</Text>
+            <Text style={commonStyles.listText}>Owner: {session.owner.name}</Text>
             <Text style={commonStyles.listText}>
-              - Description: {session.description}
+              Description: {session.description}
+            </Text>
+
+            <Text style={commonStyles.listText}>
+              Your acceptance: {session.accepted ? "true" : "false"}
             </Text>
             <Text style={commonStyles.listText}>
-              - Your acceptance: {session.accepted ? "true" : "false"}
-            </Text>
-            <Text style={commonStyles.listText}>
-              - Your response: {session.attending}
+              Your response: {session.attending}
             </Text>
           </>
         ) : (
@@ -58,88 +59,65 @@ function SessionDetails({ session }: { session?: Session }) {
   );
 }
 
-function InvitationsSummary({ session }: { session?: Session }) {
+interface SuggestionsListProps {
+  _suggestions: Session["suggestions"];
+}
+
+function SuggestionsList({ _suggestions }: SuggestionsListProps) {
+  const { currentSession } = useAppContext();
   return (
-    <>
-      <Text style={commonStyles.subTitle}>Invitations Summary</Text>
+    <View>
+      <Text style={commonStyles.subTitle}>Suggestions & Votes</Text>
       <View style={commonStyles.horzBar3} />
-      <View style={commonStyles.detailsView}>
-        {session ? (
-          <>
-            <Text style={commonStyles.listText}>
-              - Invitations sent: {session.invitations.length}
-            </Text>
-            <Text style={commonStyles.listText}>
-              - Invitations accepted:{" "}
-              {session.invitations.filter((i) => i.accepted).length}
-            </Text>
-            <Text style={commonStyles.listText}>
-              - Attending:{" "}
-              {
-                session.invitations.filter(
-                  (i) => i.accepted && i.attending === "yes",
-                ).length
-              }
-            </Text>
-            <Text style={commonStyles.listText}>
-              - Undecided:{" "}
-              {
-                session.invitations.filter(
-                  (i) => i.accepted && i.attending === "undecided",
-                ).length
-              }
-            </Text>
-            <Text style={commonStyles.listText}>
-              - Not attending:{" "}
-              {
-                session.invitations.filter(
-                  (i) => i.accepted && i.attending === "no",
-                ).length
-              }
-            </Text>
-          </>
-        ) : (
-          <Text style={commonStyles.listText}>loading...</Text>
-        )}
-      </View>
+      <ScrollView>
+        {currentSession?.suggestions.map((item, index) => (
+          <View key={item.id} style={[commonStyles.detailsView, { backgroundColor: index % 2 === 0 ? '#003f5c' : '#005974' }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text style={[commonStyles.listText, { flex: 1 }]}>{item.name}</Text>
+              <Text style={commonStyles.listText}>👍 {item.upVoteUserIds.length}  👎 {item.downVoteUserIds.length}</Text>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
       <View style={commonStyles.horzBar3} />
-    </>
+    </View>
   );
 }
 
-function SuggestionsSummary({ session }: { session?: Session }) {
-  return (
-    <>
-      <Text style={commonStyles.subTitle}>Suggestions Summary</Text>
-      <View style={commonStyles.horzBar3} />
-      <View style={commonStyles.detailsView}>
-        {session ? (
-          <>
-            <Text style={commonStyles.listText}>
-              - Suggestions: {session.suggestions.length}
-            </Text>
-            <Text style={commonStyles.listText}>
-              - Total up votes:{" "}
-              {_.sum(session.suggestions.map((s) => s.upVoteUserIds.length))}
-            </Text>
-            <Text style={commonStyles.listText}>
-              - Total down votes:{" "}
-              {_.sum(session.suggestions.map((s) => s.downVoteUserIds.length))}
-            </Text>
-          </>
-        ) : (
-          <Text style={commonStyles.listText}>loading...</Text>
-        )}
-      </View>
-      <View style={commonStyles.horzBar3} />
-    </>
-  );
+interface InvitationsListProps {
+  invitations: Session["invitations"];
 }
 
+function InvitationsList({ invitations }: InvitationsListProps) {
+  return (
+    <View>
+      <Text style={commonStyles.subTitle}>Invitations</Text>
+      <Text style={commonStyles.listText}>💌 = Accepted Status ✅ = Attending Status</Text>
+      <View style={commonStyles.horzBar3} />
+      <ScrollView>
+        {invitations.map((item, index) => (
+          <View key={item.user.id} style={[commonStyles.detailsView, { backgroundColor: index % 2 === 0 ? '#003f5c' : '#005974' }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <Text style={commonStyles.listText}>{item.user.name}</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: 200 }}>
+                <Text style={commonStyles.listText}>💌  {item.accepted ? 'Y' : 'N'}</Text>
+                <Text style={commonStyles.listText}>✅  {item.attending}</Text>
+              </View>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+      <View style={commonStyles.horzBar3} />
+    </View>
+  );
+}
 
 
 export default function Project3App() {
   const backend = useFakeBackend();
+  const [modalVisible, setModalVisible] = useState(false);
+  
+
 
   useEffect(() => {
     backend.fetchSelf().then((user) => {
@@ -156,15 +134,8 @@ export default function Project3App() {
     updateVote,
   } = useAppContext();
 
-  const [newSuggestion, setNewSuggestion] = useState('');
-  const [inviteeName, setInviteeName] = useState('');
-
-  // Add the following state for navigation
   const [currentScreen, setCurrentScreen] = useState<'initial' | 'suggestions'>('initial');
 
-  const navigateToSuggestions = () => {
-    setCurrentScreen('suggestions');
-  };
 
   const navigateToInitial = () => {
     setCurrentScreen('initial');
@@ -172,40 +143,37 @@ export default function Project3App() {
 
   const renderMainContent = () => {
     if (currentScreen === 'suggestions') {
-      // Render the Suggestions screen content here
       return (
         <>
           <TouchableOpacity onPress={navigateToInitial} style={commonStyles.goBackButton}>
             <Text style={commonStyles.listText}>Go Back to Initial Screen</Text>
           </TouchableOpacity>
-          {/* ... (Suggestions screen content) */}
-          <SuggestionsSummary session={currentSession} />
+
         </>
       );
     } else {
-      // Render the Initial screen content here
       return (
         <>
           {currentSession?.accepted && <UserDetails user={user} />}
           <SessionDetails session={currentSession} />
           <View style={commonStyles.horzBar3} />
           <Text style={commonStyles.listText}></Text>
-          <SuggestionsSummary session={currentSession} />
-          <InvitationsSummary session={currentSession} />
+          <SuggestionsList _suggestions={currentSession?.suggestions || []} />
+          <InvitationsList invitations={currentSession?.invitations || []} />
         </>
       );
     }
   };
 
+  const [suggestionName, setSuggestionName] = useState('');
+
   const handleAddSuggestion = async () => {
+    modalVisible && setModalVisible(false);
     try {
       if (currentSession && addSuggestion) {
-        // choose a suggestion or get user input
-        const newSuggestion = "New Suggestion";
-        addSuggestion(currentSession.id, newSuggestion);
-
+        addSuggestion(currentSession.id, suggestionName);
+        setModalVisible(false);
       } else {
-        // handle when currentSession or addSuggestion not available
         console.error("Current session or addSuggestion is not available.");
       }
     } catch (error) {
@@ -216,7 +184,9 @@ export default function Project3App() {
 
   const handleInviteUser = (_event: GestureResponderEvent) => {
     if (currentSession && contextInviteUser) {
-      contextInviteUser(currentSession.id, inviteeName);
+      // user input eventually?
+      const newInviteeName = "New Invitee";
+      contextInviteUser(currentSession.id, newInviteeName);
     } else {
       console.error("Invalid invitation input");
     }
@@ -285,7 +255,7 @@ export default function Project3App() {
   return (
     <SafeAreaView style={commonStyles.app}>
       <View style={commonStyles.appContainer}>
-      <Text style={{ ...commonStyles.title, color: theme.titleText }}>In Decision</Text>
+        <Text style={{ ...commonStyles.title, color: theme.titleText }}>In Decision</Text>
         <View style={commonStyles.horzBar} />
         <Text style={{ ...commonStyles.bodyText, color: theme.bodyText }}>Make Up Our Mind</Text>
         <View style={commonStyles.horzBar} />
@@ -299,12 +269,37 @@ export default function Project3App() {
         </View>
         {/* User input components */}
         <View>
-          <TextInput
-            placeholder="Enter suggestion"
-            value={newSuggestion}
-            onChangeText={(text) => setNewSuggestion(text)}
-          />
-          <Button title="Add Suggestion" onPress={handleAddSuggestion} disabled={!currentSession?.accepted} />
+        <Modal
+  animationType="slide"
+  transparent={true}
+  visible={modalVisible}
+  onRequestClose={() => {
+    setModalVisible(false);
+  }}
+>
+  <View style={commonStyles.centeredView}>
+    <View style={commonStyles.modalView}>
+      <TextInput
+        value={suggestionName}
+        onChangeText={setSuggestionName}
+        placeholder="Add suggestion..."
+      />
+
+      <TouchableHighlight
+        style={{ ...commonStyles.openButton, backgroundColor: "#2196F3" }}
+        onPress={() => {
+          handleAddSuggestion();
+          setModalVisible(false);
+          setSuggestionName('');
+        }}
+      >
+        <Text style={commonStyles.textStyle}>DONE</Text>
+      </TouchableHighlight>
+    </View>
+  </View>
+</Modal>
+
+<Button title="Add Suggestion" onPress={() => setModalVisible(true)} disabled={!currentSession?.accepted} />
         </View>
         <ScrollView style={commonStyles.scroll} contentContainerStyle={commonStyles.scrollContent}>
           {renderMainContent()}
