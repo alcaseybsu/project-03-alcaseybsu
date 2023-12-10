@@ -7,34 +7,16 @@ import {
   View,
   ScrollView,
   Button,
-  SafeAreaView,
-  ScrollView,
-  Text,
-  View,
 } from "react-native";
 import { useAppContext } from "./AppContext";
 import { Session, User, VOTES, nextAttending } from "./types";
 import _ from "lodash";
 import { choose } from "./utils";
-import { StatusBar } from "expo-status-bar";
-import { StatusBar } from "expo-status-bar";
-import React from "react";
-import React from "react";
-import { Text, SafeAreaView, View, ScrollView } from "react-native";
-import { Text, SafeAreaView, View, ScrollView } from "react-native";
-import { currentScreen, UserDetails, SessionDetails, SuggestionsSummary, InvitationsSummary } from '../Project3App';
-import SuggestionsScreen from "./SuggestionsScreen";
-import SuggestionsScreen from "./SuggestionsScreen";
-import { commonStyles } from "./provided/styles";
-import { commonStyles } from "./provided/styles";
-import ExpoStatusBar from "expo-status-bar/build/ExpoStatusBar";
-import { commonStyles } from "./styles";
 
 /**
  * This is a demo of how to use the AppContext properly.
  * You may use this as a reference for your P3 Solution.
  */
-
 function UserDetails({ user }: { user?: User }) {
   return (
     <>
@@ -54,7 +36,6 @@ function UserDetails({ user }: { user?: User }) {
     </>
   );
 }
-
 function SessionDetails({ session }: { session?: Session }) {
   return (
     <>
@@ -83,7 +64,6 @@ function SessionDetails({ session }: { session?: Session }) {
     </>
   );
 }
-
 function InvitationsSummary({ session }: { session?: Session }) {
   return (
     <>
@@ -132,7 +112,6 @@ function InvitationsSummary({ session }: { session?: Session }) {
     </>
   );
 }
-
 function SuggestionsSummary({ session }: { session?: Session }) {
   return (
     <>
@@ -161,7 +140,6 @@ function SuggestionsSummary({ session }: { session?: Session }) {
     </>
   );
 }
-
 export default function DemoSummary() {
   const {
     user,
@@ -206,7 +184,6 @@ export default function DemoSummary() {
       );
     }
   };
-
   return (
     <SafeAreaView style={styles.app}>
       <View style={styles.appContainer}>
@@ -247,7 +224,6 @@ const theme = {
   subTitleText: "#f0f0f0",
   bodyText: "#d8d8d8",
 };
-
 const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: "row",
@@ -323,26 +299,3 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 });
-return (
-  <SafeAreaView style={commonStyles.app}>
-    <View style={commonStyles.appContainer}>
-      <ScrollView style={commonStyles.scroll} contentContainerStyle={commonStyles.scrollContent}>
-        {currentScreen === 'initial' && (
-          <>
-            {currentSession?.accepted && <UserDetails user={user} />}
-            <SessionDetails session={currentSession} />
-            <View style={commonStyles.horzBar3} />
-            <Text style={commonStyles.listText}>Suggestions Summary</Text>
-            <SuggestionsSummary session={currentSession} />
-            <InvitationsSummary session={currentSession} />
-          </>
-        )}
-
-        {currentScreen === 'suggestions' && (
-          <SuggestionsScreen suggestions={currentSession?.suggestions || []} />
-        )}
-        <StatusBar style="auto" />
-      </ScrollView>
-    </View>
-  </SafeAreaView>
-);
