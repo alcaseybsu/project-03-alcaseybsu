@@ -64,7 +64,13 @@ interface SuggestionsListProps {
 }
 
 function SuggestionsList({ _suggestions }: SuggestionsListProps) {
-  const { currentSession } = useAppContext();
+  let currentSession;
+  try {
+    currentSession = useAppContext().currentSession;
+  } catch (error) {
+    return <Text>Error: {(error as Error).message}</Text>;
+  }
+
   return (
     <View>
       <Text style={commonStyles.subTitle}>Suggestions & Votes</Text>

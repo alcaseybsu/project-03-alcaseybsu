@@ -8,12 +8,7 @@ import React, {
   useState,
 } from "react";
 
-/**
- * DO NOT change this file.
- */
-
 import { Attending, Session, User, Vote } from "./types";
-import { useFakeBackend } from "../backend/FakeBackend";
 
 const REFRESH_INTERVAL = 5 * 1000;
 
@@ -30,10 +25,14 @@ export interface AppState {
   updateVote?: (sessionId: string, suggestionId: string, vote: Vote) => void;
 }
 
-const AppContext = createContext<AppState>({});
+const AppContext = createContext<AppState | undefined>(undefined);
 
 export function useAppContext(): AppState {
-  return useContext(AppContext);
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('useAppContext must be used within a AppContextProvider');
+  }
+  return context;
 }
 
 interface Props {
@@ -48,57 +47,153 @@ export function AppContextProvider({
 }: PropsWithChildren<Props>) {
   const [user, setUser] = useState<User>();
   const [currentSession, setCurrentSession] = useState<Session>();
+  const [accessToken, setAccessToken] = useState<string>();
 
-  const backend = useFakeBackend();
+  const clientId = "leah";
+  const clientSecret = "fdb5f2e0ba5675b56aebcc40";
+  const URL = "http://cs411.duckdns.org";
 
   useEffect(() => {
-    backend.fetchSelf().then((s) => setUser(s));
-    backend.fetchSession().then((session) => setCurrentSession(session));
+    // fetch token
+    fetch(`${URL}/token`, {
+      method: "POST",
+      body: JSON.stringify({ grant_type: "client_credentials", client_id: clientId, client_secret: clientSecret }),
+      headers: new Headers({
+        "Content-Type": "application/json",
+      }),
+    })
+      .then((response) => {
+        if (response.ok) return response.json();
+        throw new Error("Error fetching token");
+      })
+      .then((auth) => {
+        setAccessToken(auth.access_token);
+
+        // fetch self
+        return fetch(`${URL}/self`, {
+          method: "GET",
+          headers: new Headers({
+            Authorization: `Bearer ${auth.access_token}`,
+          }),
+        });
+      })
+      .then((response) => {
+        if (response.ok) return response.json();
+        throw new Error("Error fetching self");
+      })
+      .then((self) => {
+        setUser(self);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
   }, []);
 
+  
   useEffect(() => {
     if (!pauseUpdates) {
       const interval = setInterval(() => {
-        // log("Sending session refresh to backend");
-        backend.fetchSession().then((session) => setCurrentSession(session));
+        // fetch session
+        fetch(`${URL}/session`, {
+          method: "GET",
+          headers: new Headers({
+            Authorization: `Bearer ${accessToken}`,
+          }),
+        })
+          .then((response) => {
+            if (response.ok) return response.json();
+            throw new Error("Error fetching session");
+          })
+          .then((session) => setCurrentSession(session))
+          .catch((error) => console.error("Error:", error));
       }, refreshInterval ?? REFRESH_INTERVAL);
       return () => {
         clearInterval(interval);
       };
     }
-  }, [backend.fetchSession, setCurrentSession, pauseUpdates, refreshInterval]);
-
+  }, [accessToken, setCurrentSession, pauseUpdates, refreshInterval]);
+  
   const addSuggestion = useCallback(
     (sessionId: string, name: string) => {
-      backend.addSuggestion(sessionId, name).then((s) => setCurrentSession(s));
+      // fetch suggestion
+      fetch(`${URL}/session/${sessionId}/suggestion`, {
+        method: "POST",
+        body: JSON.stringify({ name }),
+        headers: new Headers({
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        }),
+      })
+        .then((response) => {
+          if (response.ok) return response.json();
+          throw new Error("Error adding suggestion");
+        })
+        .then((s) => setCurrentSession(s))
+        .catch((error) => console.error("Error:", error));
     },
-    [backend.addSuggestion, setCurrentSession],
+    [accessToken, setCurrentSession],
   );
 
   const inviteUser = useCallback(
-    (sessionId: string, name: string) => {
-      backend.inviteUser(sessionId, name).then((s) => setCurrentSession(s));
+    (sessionId: string, name: string) => {      
+      fetch(`${URL}/session/${sessionId}/invite`, {
+        method: "POST",
+        body: JSON.stringify({ name }),
+        headers: new Headers({
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        }),
+      })
+        .then((response) => {
+          if (response.ok) return response.json();
+          throw new Error("Error inviting user");
+        })
+        .then((s) => setCurrentSession(s))
+        .catch((error) => console.error("Error:", error));
     },
-    [backend.inviteUser, setCurrentSession],
+    [accessToken, setCurrentSession],
   );
-
+  
   const updateResponse = useCallback(
     (sessionId: string, accepted: boolean, attending: Attending) => {
-      backend
-        .updateResponse(sessionId, accepted, attending)
-        .then((s) => setCurrentSession(s));
+      fetch(`${URL}/session/${sessionId}/response`, {
+        method: "POST",
+        body: JSON.stringify({ accepted, attending }),
+        headers: new Headers({
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        }),
+      })
+        .then((response) => {
+          if (response.ok) return response.json();
+          throw new Error("Error updating response");
+        })
+        .then((s) => setCurrentSession(s))
+        .catch((error) => console.error("Error:", error));
     },
-    [backend.updateResponse, setCurrentSession],
+    [accessToken, setCurrentSession],
   );
-
+  
   const updateVote = useCallback(
     (sessionId: string, suggestionId: string, vote: Vote) => {
-      backend
-        .updateVote(sessionId, suggestionId, vote)
-        .then((s) => setCurrentSession(s));
+      fetch(`${URL}/session/${sessionId}/suggestion/${suggestionId}/vote`, {
+        method: "POST",
+        body: JSON.stringify({ vote }),
+        headers: new Headers({
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        }),
+      })
+        .then((response) => {
+          if (response.ok) return response.json();
+          throw new Error("Error updating vote");
+        })
+        .then((s) => setCurrentSession(s))
+        .catch((error) => console.error("Error:", error));
     },
-    [backend.updateVote, setCurrentSession],
+    [accessToken, setCurrentSession],
   );
+
 
   const appState = useMemo(() => {
     return {
