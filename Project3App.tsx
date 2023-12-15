@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useFakeBackend } from './backend/FakeBackend';
 import _ from "lodash";
 import { StatusBar } from "expo-status-bar";
-import { Text, TextInput, SafeAreaView, View, ScrollView, Button, GestureResponderEvent, TouchableOpacity, Modal, TouchableHighlight } from "react-native";
+import { Text, TextInput, SafeAreaView, View, ScrollView, Button, Modal, TouchableHighlight } from "react-native";
 import { commonStyles, theme } from "./provided/styles";
 import { useAppContext } from "./provided/AppContext";
-import { Session, User, VOTES, nextAttending, Attending } from "./provided/types";
+import { Session, User, VOTES, Attending } from "./provided/types";
 import { choose } from "./provided/utils";
 
 
@@ -63,7 +63,7 @@ interface SuggestionsListProps {
   _suggestions: Session["suggestions"];
 }
 
-function SuggestionsList({ _suggestions }: SuggestionsListProps) {
+function SuggestionsList({ _suggestions, handleUpdateVote }: SuggestionsListProps & { handleUpdateVote: () => void }) {
   let currentSession;
   try {
     currentSession = useAppContext().currentSession;
@@ -73,7 +73,10 @@ function SuggestionsList({ _suggestions }: SuggestionsListProps) {
 
   return (
     <View>
-      <Text style={commonStyles.subTitle}>Suggestions & Votes</Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text style={commonStyles.subTitle}>Suggestions & Votes</Text>
+        <Button title="Vote" onPress={handleUpdateVote} disabled={!currentSession?.accepted} />
+      </View>
       <View style={commonStyles.horzBar3} />
       <ScrollView>
         {currentSession?.suggestions.map((item, index) => (
@@ -122,8 +125,6 @@ function InvitationsList({ invitations }: InvitationsListProps) {
 export default function Project3App() {
   const backend = useFakeBackend();
   const [modalVisible, setModalVisible] = useState(false);
-  
-
 
   useEffect(() => {
     backend.fetchSelf().then((user) => {
@@ -140,32 +141,16 @@ export default function Project3App() {
     updateVote,
   } = useAppContext();
 
-  const [currentScreen, setCurrentScreen] = useState<'initial' | 'suggestions'>('initial');
-
-
-  const navigateToInitial = () => {
-    setCurrentScreen('initial');
-  };
+  const [currentScreen] = useState<'initial' | 'suggestions'>('initial');  
 
   const renderMainContent = () => {
-    if (currentScreen === 'suggestions') {
-      return (
-        <>
-          <TouchableOpacity onPress={navigateToInitial} style={commonStyles.goBackButton}>
-            <Text style={commonStyles.listText}>Go Back to Initial Screen</Text>
-          </TouchableOpacity>
-
-        </>
-      );
-    } else {
+    if (currentScreen === 'initial') {
       return (
         <>
           {currentSession?.accepted && <UserDetails user={user} />}
           <SessionDetails session={currentSession} />
-          <View style={commonStyles.horzBar3} />
-          <Text style={commonStyles.listText}></Text>
-          <SuggestionsList _suggestions={currentSession?.suggestions || []} />
-          <InvitationsList invitations={currentSession?.invitations || []} />
+          {currentSession?.accepted && <SuggestionsList _suggestions={currentSession?.suggestions || []} handleUpdateVote={handleUpdateVote} />}
+          {currentSession?.accepted && <InvitationsList invitations={currentSession?.invitations || []} />}
         </>
       );
     }
@@ -187,14 +172,19 @@ export default function Project3App() {
     }
   };
 
+  const [inputUserId, setInputUserId] = useState<string>('');
 
-  const handleInviteUser = (_event: GestureResponderEvent) => {
-    if (currentSession && contextInviteUser) {
-      // user input eventually?
-      const newInviteeName = "New Invitee";
-      contextInviteUser(currentSession.id, newInviteeName);
-    } else {
-      console.error("Invalid invitation input");
+  const handleInviteUser = async (UserId: string) => {
+    modalVisible && setModalVisible(false);
+    try {
+      if (currentSession && contextInviteUser) {
+        contextInviteUser(currentSession.id, UserId);
+        setModalVisible(false);
+      } else {
+        console.error("Current session or contextInviteUser is not available.");
+      }
+    } catch (error) {
+      console.error("Error inviting user:", error);
     }
   };
 
@@ -204,13 +194,6 @@ export default function Project3App() {
         const suggestion = choose(currentSession.suggestions);
         if (suggestion) {
           updateVote(currentSession.id, suggestion.id, choose(VOTES));
-          if (updateResponse) {
-            updateResponse(
-              currentSession.id,
-              true,
-              nextAttending(currentSession.attending)
-            );
-          }
           resolve();
         } else {
           resolve();
@@ -220,7 +203,6 @@ export default function Project3App() {
       }
     });
   };
-
 
   const handleUpdateResponse = () => {
     if (currentSession && updateResponse) {
@@ -256,6 +238,20 @@ export default function Project3App() {
     }
   };
 
+  const handleUnacceptInvitation = async () => {
+    try {
+      if (currentSession && updateResponse) {
+        const attendingStatus: Attending = 'no';
+        updateResponse(currentSession.id, false, attendingStatus);
+      } else {
+        console.error("Current session or updateResponse is not available.");
+      }
+    } catch (error) {
+      console.error("Error unaccepting invitation:", error);
+    }
+  };
+
+  const [modalAction, setModalAction] = useState<'invite' | 'addSuggestion'>('invite');
 
 
   return (
@@ -269,43 +265,49 @@ export default function Project3App() {
           {!currentSession?.accepted && (
             <Button title="Accept" onPress={handleAcceptInvitation} disabled={currentSession?.accepted} />
           )}
+          {currentSession?.accepted && (
+            <Button title="Unaccept" onPress={handleUnacceptInvitation} disabled={!currentSession?.accepted} />
+          )}
           <Button title="Respond" onPress={handleUpdateResponse} disabled={!currentSession?.accepted} />
-          <Button title="Invite" onPress={handleInviteUser} disabled={!currentSession?.accepted} />
-          <Button title="Vote" onPress={handleUpdateVote} disabled={!currentSession?.accepted} />
+          <Button title="Invite" onPress={() => setModalVisible(true)} disabled={!currentSession?.accepted} />
+          
         </View>
         {/* User input components */}
         <View>
-        <Modal
-  animationType="slide"
-  transparent={true}
-  visible={modalVisible}
-  onRequestClose={() => {
-    setModalVisible(false);
-  }}
->
-  <View style={commonStyles.centeredView}>
-    <View style={commonStyles.modalView}>
-      <TextInput
-        value={suggestionName}
-        onChangeText={setSuggestionName}
-        placeholder="Add suggestion..."
-      />
-
-      <TouchableHighlight
-        style={{ ...commonStyles.openButton, backgroundColor: "#2196F3" }}
-        onPress={() => {
-          handleAddSuggestion();
-          setModalVisible(false);
-          setSuggestionName('');
-        }}
-      >
-        <Text style={commonStyles.textStyle}>DONE</Text>
-      </TouchableHighlight>
-    </View>
-  </View>
-</Modal>
-
-<Button title="Add Suggestion" onPress={() => setModalVisible(true)} disabled={!currentSession?.accepted} />
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => {
+              setModalVisible(false);
+            }}
+          >
+            <View style={commonStyles.centeredView}>
+              <View style={commonStyles.modalView}>
+                <TextInput
+                  value={modalAction === 'invite' ? inputUserId : suggestionName}
+                  onChangeText={modalAction === 'invite' ? setInputUserId : setSuggestionName}
+                  placeholder={modalAction === 'invite' ? "First Name..." : "Suggestion..."}
+                />
+                <TouchableHighlight
+                  style={{ ...commonStyles.openButton, backgroundColor: "#2196F3" }}
+                  onPress={() => {
+                    if (modalAction === 'invite') {
+                      handleInviteUser(inputUserId);
+                    } else if (modalAction === 'addSuggestion') {
+                      handleAddSuggestion();
+                    }
+                    setModalVisible(false);
+                    setInputUserId('');
+                    setSuggestionName('');
+                  }}
+                >
+                  <Text style={commonStyles.textStyle}>{modalAction === 'invite' ? 'Invite' : 'Done'}</Text>
+                </TouchableHighlight>
+              </View>
+            </View>
+          </Modal>
+          <Button title="Add Suggestion" onPress={() => { setModalVisible(true); setModalAction('addSuggestion'); }} disabled={!currentSession?.accepted} />
         </View>
         <ScrollView style={commonStyles.scroll} contentContainerStyle={commonStyles.scrollContent}>
           {renderMainContent()}

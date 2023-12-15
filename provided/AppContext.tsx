@@ -10,7 +10,13 @@ import React, {
 
 import { Attending, Session, User, Vote } from "./types";
 
+import { Buffer } from "buffer";
+
 const REFRESH_INTERVAL = 5 * 1000;
+
+export function base64(input: string): string {
+  return Buffer.from(input).toString("base64");
+}
 
 export interface AppState {
   currentSession?: Session;
@@ -47,20 +53,20 @@ export function AppContextProvider({
 }: PropsWithChildren<Props>) {
   const [user, setUser] = useState<User>();
   const [currentSession, setCurrentSession] = useState<Session>();
-  const [accessToken, setAccessToken] = useState<string>();
+  const [accessToken, setAccessToken] = useState<string>();    
 
-  const clientId = "leah";
-  const clientSecret = "fdb5f2e0ba5675b56aebcc40";
+  const CLIENT_ID = "leah";
+  const CLIENT_SECRET = "fdb5f2e0ba5675b56aebcc40";
   const URL = "http://cs411.duckdns.org";
 
   useEffect(() => {
-    // fetch token
     fetch(`${URL}/token`, {
       method: "POST",
-      body: JSON.stringify({ grant_type: "client_credentials", client_id: clientId, client_secret: clientSecret }),
-      headers: new Headers({
-        "Content-Type": "application/json",
-      }),
+      body: "grant_type=client_credentials",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": `Basic ${base64(`${CLIENT_ID}:${CLIENT_SECRET}`)}`,
+      },
     })
       .then((response) => {
         if (response.ok) return response.json();
@@ -70,31 +76,30 @@ export function AppContextProvider({
         setAccessToken(auth.access_token);
 
         // fetch self
-        return fetch(`${URL}/self`, {
+        fetch(`${URL}/indecisive/self`, {
           method: "GET",
           headers: new Headers({
             Authorization: `Bearer ${auth.access_token}`,
           }),
-        });
-      })
-      .then((response) => {
-        if (response.ok) return response.json();
-        throw new Error("Error fetching self");
-      })
-      .then((self) => {
-        setUser(self);
-      })
-      .catch((error) => {
-        console.error("Error:", error);
+        })
+          .then((response) => {
+            if (response.ok) return response.json();
+            throw new Error("Error fetching self");
+          })
+          .then((self) => {
+            setUser(self);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
       });
   }, []);
 
-  
   useEffect(() => {
     if (!pauseUpdates) {
       const interval = setInterval(() => {
         // fetch session
-        fetch(`${URL}/session`, {
+        fetch(`${URL}/indecisive/current-session`, {
           method: "GET",
           headers: new Headers({
             Authorization: `Bearer ${accessToken}`,
@@ -112,13 +117,13 @@ export function AppContextProvider({
       };
     }
   }, [accessToken, setCurrentSession, pauseUpdates, refreshInterval]);
-  
+
   const addSuggestion = useCallback(
     (sessionId: string, name: string) => {
       // fetch suggestion
-      fetch(`${URL}/session/${sessionId}/suggestion`, {
+      fetch(`${URL}/indecisive/sessions/${sessionId}/suggest`, {
         method: "POST",
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name: name }),
         headers: new Headers({
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
@@ -135,10 +140,10 @@ export function AppContextProvider({
   );
 
   const inviteUser = useCallback(
-    (sessionId: string, name: string) => {      
-      fetch(`${URL}/session/${sessionId}/invite`, {
+    (sessionId: string, userId: string) => { 
+      fetch(`${URL}/indecisive/sessions/${sessionId}/invite`, {
         method: "POST",
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ userId: userId}), 
         headers: new Headers({
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
@@ -146,17 +151,20 @@ export function AppContextProvider({
       })
         .then((response) => {
           if (response.ok) return response.json();
-          throw new Error("Error inviting user");
+          // Log the status code and the response body when the response is not OK
+          return response.text().then((text) => {
+            throw new Error(`Error inviting user. Status: ${response.status}. Body: ${text}`);
+          });
         })
         .then((s) => setCurrentSession(s))
         .catch((error) => console.error("Error:", error));
     },
     [accessToken, setCurrentSession],
   );
-  
+
   const updateResponse = useCallback(
     (sessionId: string, accepted: boolean, attending: Attending) => {
-      fetch(`${URL}/session/${sessionId}/response`, {
+      fetch(`${URL}/indecisive/sessions/${sessionId}/respond`, {
         method: "POST",
         body: JSON.stringify({ accepted, attending }),
         headers: new Headers({
@@ -173,10 +181,10 @@ export function AppContextProvider({
     },
     [accessToken, setCurrentSession],
   );
-  
+
   const updateVote = useCallback(
     (sessionId: string, suggestionId: string, vote: Vote) => {
-      fetch(`${URL}/session/${sessionId}/suggestion/${suggestionId}/vote`, {
+      fetch(`${URL}/indecisive/sessions/${sessionId}/vote/${suggestionId}`, { // Corrected URL
         method: "POST",
         body: JSON.stringify({ vote }),
         headers: new Headers({
@@ -194,7 +202,6 @@ export function AppContextProvider({
     [accessToken, setCurrentSession],
   );
 
-
   const appState = useMemo(() => {
     return {
       user,
@@ -205,5 +212,7 @@ export function AppContextProvider({
       updateVote,
     };
   }, [user, currentSession]);
+
   return <AppContext.Provider value={appState}>{children}</AppContext.Provider>;
 }
+
