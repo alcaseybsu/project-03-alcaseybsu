@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useFakeBackend } from './backend/FakeBackend';
 import _ from "lodash";
 import { StatusBar } from "expo-status-bar";
-import { Text, TextInput, SafeAreaView, View, ScrollView, Button, Modal, TouchableHighlight } from "react-native";
+import { Text, TextInput, SafeAreaView, View, ScrollView, Button, Modal, TouchableOpacity, TouchableHighlight } from "react-native";
 import { commonStyles, theme } from "./provided/styles";
 import { useAppContext } from "./provided/AppContext";
-import { Session, User, VOTES, Attending } from "./provided/types";
-import { choose } from "./provided/utils";
+import { Session, User, Vote, Attending } from "./provided/types";
+//import { choose } from "./provided/utils";
 
 
 function UserDetails({ user }: { user?: User }) {
@@ -63,7 +63,7 @@ interface SuggestionsListProps {
   _suggestions: Session["suggestions"];
 }
 
-function SuggestionsList({ _suggestions, handleUpdateVote }: SuggestionsListProps & { handleUpdateVote: () => void }) {
+function SuggestionsList({ _suggestions, handleUpdateVote }: SuggestionsListProps & { handleUpdateVote: (suggestionId: string, voteType: 'up' | 'down') => void }) {
   let currentSession;
   try {
     currentSession = useAppContext().currentSession;
@@ -75,15 +75,23 @@ function SuggestionsList({ _suggestions, handleUpdateVote }: SuggestionsListProp
     <View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Text style={commonStyles.subTitle}>Suggestions & Votes</Text>
-        <Button title="Vote" onPress={handleUpdateVote} disabled={!currentSession?.accepted} />
+        <Button title="Vote" onPress={() => handleUpdateVote('', 'up')} disabled={!currentSession?.accepted} />
       </View>
       <View style={commonStyles.horzBar3} />
       <ScrollView>
         {currentSession?.suggestions.map((item, index) => (
           <View key={item.id} style={[commonStyles.detailsView, { backgroundColor: index % 2 === 0 ? '#003f5c' : '#005974' }]}>
+
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <Text style={[commonStyles.listText, { flex: 1 }]}>{item.name}</Text>
-              <Text style={commonStyles.listText}>👍 {item.upVoteUserIds.length}  👎 {item.downVoteUserIds.length}</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <TouchableOpacity onPress={() => handleUpdateVote(item.id, 'up')}>
+                  <Text style={commonStyles.listText}>👍 {item.upVoteUserIds.length}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleUpdateVote(item.id, 'down')}>
+                  <Text style={commonStyles.listText}>👎 {item.downVoteUserIds.length}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         ))}
@@ -141,7 +149,7 @@ export default function Project3App() {
     updateVote,
   } = useAppContext();
 
-  const [currentScreen] = useState<'initial' | 'suggestions'>('initial');  
+  const [currentScreen] = useState<'initial' | 'suggestions'>('initial');
 
   const renderMainContent = () => {
     if (currentScreen === 'initial') {
@@ -188,12 +196,12 @@ export default function Project3App() {
     }
   };
 
-  const handleUpdateVote = (): Promise<void> => {
+  const handleUpdateVote = (suggestionId: string, voteType: Vote): Promise<void> => {
     return new Promise((resolve, _reject) => {
       if (currentSession && updateVote) {
-        const suggestion = choose(currentSession.suggestions);
+        const suggestion = currentSession.suggestions.find(s => s.id === suggestionId);
         if (suggestion) {
-          updateVote(currentSession.id, suggestion.id, choose(VOTES));
+          updateVote(currentSession.id, suggestion.id, voteType);
           resolve();
         } else {
           resolve();
@@ -203,6 +211,7 @@ export default function Project3App() {
       }
     });
   };
+
 
   const handleUpdateResponse = () => {
     if (currentSession && updateResponse) {
@@ -270,7 +279,7 @@ export default function Project3App() {
           )}
           <Button title="Respond" onPress={handleUpdateResponse} disabled={!currentSession?.accepted} />
           <Button title="Invite" onPress={() => setModalVisible(true)} disabled={!currentSession?.accepted} />
-          
+
         </View>
         {/* User input components */}
         <View>
