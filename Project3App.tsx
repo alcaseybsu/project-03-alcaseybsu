@@ -6,8 +6,6 @@ import { Text, TextInput, SafeAreaView, View, ScrollView, Button, Modal, Touchab
 import { commonStyles, theme } from "./provided/styles";
 import { useAppContext } from "./provided/AppContext";
 import { Session, User, Vote, Attending } from "./provided/types";
-//import { choose } from "./provided/utils";
-
 
 function UserDetails({ user }: { user?: User }) {
   return (
@@ -75,7 +73,9 @@ function SuggestionsList({ _suggestions, handleUpdateVote }: SuggestionsListProp
     <View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Text style={commonStyles.subTitle}>Suggestions & Votes</Text>
-        <Button title="Vote" onPress={() => handleUpdateVote('', 'up')} disabled={!currentSession?.accepted} />
+      </View>
+      <View>
+        <Text style={commonStyles.listText}>Touch 👍 to Upvote, Touch 👎 to Downvote</Text>
       </View>
       <View style={commonStyles.horzBar3} />
       <ScrollView>
