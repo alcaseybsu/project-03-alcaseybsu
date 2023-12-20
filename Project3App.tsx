@@ -278,7 +278,7 @@ export default function Project3App() {
             <Button title="Unaccept" onPress={handleUnacceptInvitation} disabled={!currentSession?.accepted} />
           )}
           <Button title="Respond" onPress={handleUpdateResponse} disabled={!currentSession?.accepted} />
-          <Button title="Invite" onPress={() => setModalVisible(true)} disabled={!currentSession?.accepted} />
+          <Button title="Invite" onPress={() => {setModalVisible(true);setModalAction("invite");} disabled={!currentSession?.accepted} />
 
         </View>
         {/* User input components */}
