@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView } from 'react-native';
+import { ScrollView } from 'react-native';
 import SuggestionsList from './SuggestionsList'; 
 import { commonStyles } from './provided/styles';
 
