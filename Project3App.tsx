@@ -81,6 +81,7 @@ function SuggestionsList({ _suggestions, handleUpdateVote }: SuggestionsListProp
       </View>
       <View>
         <Text style={commonStyles.listText}>Touch 👍 to Upvote, Touch 👎 to Downvote</Text>
+        <Text style={commonStyles.listText}>Your vote: Green = Upvote, Red = Downvote</Text>
       </View>
       <View style={commonStyles.horzBar3} />
       <ScrollView>
