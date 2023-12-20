@@ -63,8 +63,13 @@ interface SuggestionsListProps {
 
 function SuggestionsList({ _suggestions, handleUpdateVote }: SuggestionsListProps & { handleUpdateVote: (suggestionId: string, voteType: 'up' | 'down') => void }) {
   let currentSession;
+  let user: {id: string, name: string} | undefined;
   try {
-    currentSession = useAppContext().currentSession;
+    const context = useAppContext();
+    currentSession = context.currentSession;
+    if (context.user) {
+      user = context.user;
+    }
   } catch (error) {
     return <Text>Error: {(error as Error).message}</Text>;
   }
@@ -86,10 +91,10 @@ function SuggestionsList({ _suggestions, handleUpdateVote }: SuggestionsListProp
               <Text style={[commonStyles.listText, { flex: 1 }]}>{item.name}</Text>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <TouchableOpacity onPress={() => handleUpdateVote(item.id, 'up')}>
-                  <Text style={commonStyles.listText}>👍 {item.upVoteUserIds.length}</Text>
+                  <Text style={[commonStyles.listText, { color: item.upVoteUserIds.includes(user?.id || 'default') ? 'green' : 'black' }]}>👍 {item.upVoteUserIds.length}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => handleUpdateVote(item.id, 'down')}>
-                  <Text style={commonStyles.listText}>👎 {item.downVoteUserIds.length}</Text>
+                  <Text style={[commonStyles.listText, { color: item.downVoteUserIds.includes(user?.id || 'default') ? 'red' : 'black' }]}>👎 {item.downVoteUserIds.length}</Text>
                 </TouchableOpacity>
               </View>
             </View>
